@@ -1,5 +1,5 @@
 services:
-  school-mgmt:
+  misc:
     build:
       context: .
       dockerfile: Dockerfile
