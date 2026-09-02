@@ -114,7 +114,7 @@ func SearchTitle(tenantUUID string, payload model.SearchPayload) ([]model.ReadRe
 	//* base query
 	query := `
 	with datas as(
-		select 
+		select distinct on (t.abbr_name)
 			t.uuid
 			,t.name
 			,t.abbr_name 
