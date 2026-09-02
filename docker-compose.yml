@@ -6,11 +6,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=gakuren-network"
-      - "traefik.http.routers.school-mgmt.rule=Host(`api.gakuren.web.id`) && PathPrefix(`/v1/misc`)"
-      - "traefik.http.routers.school-mgmt.entrypoints=websecure"
-      - "traefik.http.routers.school-mgmt.tls=true"
-      - "traefik.http.routers.school-mgmt.tls.certresolver=letsencrypt"
-      - "traefik.http.services.school-mgmt.loadbalancer.server.port=3000"
+      - "traefik.http.routers.misc.rule=Host(`api.gakuren.web.id`) && PathPrefix(`/v1/misc`)"
+      - "traefik.http.routers.misc.entrypoints=websecure"
+      - "traefik.http.routers.misc.tls=true"
+      - "traefik.http.routers.misc.tls.certresolver=letsencrypt"
+      - "traefik.http.services.misc.loadbalancer.server.port=3000"
     expose:
       - "3000"
     environment:
@@ -32,7 +32,7 @@ services:
     networks:
       gakuren-network:
         aliases:
-          - school-mgmt
+          - misc-mgmt
 
 networks:
   gakuren-network:
