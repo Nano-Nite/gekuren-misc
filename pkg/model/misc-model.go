@@ -65,3 +65,13 @@ type ReadResultTitle struct {
 	Sequence int       `db:"sequence" json:"sequence"`
 	Status   string    `db:"status" json:"status"`
 }
+
+type ReadResultEducationLevel struct {
+	UUID           uuid.UUID `db:"uuid" json:"uuid"`
+	Code           string    `db:"code" json:"code"`
+	Name           string    `db:"name" json:"name"`
+	Description    string    `db:"description" json:"description"`
+	LevelOrder     int       `db:"level_order" json:"level_order"`
+	EquivalenLevel string    `db:"equivalent_level" json:"equivalent_level"`
+	Status         string    `db:"status" json:"status"`
+}
