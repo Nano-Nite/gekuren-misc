@@ -61,5 +61,7 @@ type ReadResultTitle struct {
 	UUID     uuid.UUID `db:"uuid" json:"uuid"`
 	Name     string    `db:"name" json:"name"`
 	AbbrName *string   `db:"abbr_name" json:"abbr_name"`
+	IsPrefix bool      `db:"is_prefix" json:"is_prefix"`
+	Sequence int       `db:"sequence" json:"sequence"`
 	Status   string    `db:"status" json:"status"`
 }
