@@ -118,6 +118,8 @@ func SearchTitle(tenantUUID string, payload model.SearchPayload) ([]model.ReadRe
 			t.uuid
 			,t.name
 			,t.abbr_name 
+			,t.is_prefix
+			,t.sequence
 			,s.name as status
 		from public.title t
 		join public.status s on t.status_uuid = s.uuid
