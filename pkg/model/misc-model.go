@@ -56,3 +56,10 @@ type ReadGenderResult struct {
 	AbbrName *string   `db:"abbr_name" json:"abbr_name"`
 	Status   string    `db:"status" json:"status"`
 }
+
+type ReadResultTitle struct {
+	UUID     uuid.UUID `db:"uuid" json:"uuid"`
+	Name     string    `db:"name" json:"name"`
+	AbbrName *string   `db:"abbr_name" json:"abbr_name"`
+	Status   string    `db:"status" json:"status"`
+}
