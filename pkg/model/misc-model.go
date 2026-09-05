@@ -75,3 +75,11 @@ type ReadResultEducationLevel struct {
 	EquivalenLevel string    `db:"equivalent_level" json:"equivalent_level"`
 	Status         string    `db:"status" json:"status"`
 }
+
+type ReadResultPosition struct {
+	UUID     uuid.UUID `db:"uuid" json:"uuid"`
+	Name     string    `db:"name" json:"name"`
+	AbbrName string    `db:"abbr_name" json:"abbr_name"`
+	Status   string    `db:"status" json:"status"`
+	IsStaff  bool      `db:"is_staff" json:"is_staff"`
+}

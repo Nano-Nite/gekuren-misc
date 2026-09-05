@@ -311,3 +311,104 @@ func SearchEducationLevel(tenantUUID string, payload model.SearchPayload) ([]mod
 
 	return *selectedData, &dataStat, nil
 }
+
+func SearchPosition(tenantUUID string, payload model.SearchPayload) ([]model.ReadResultPosition, *model.DataStatistics, error) {
+	var param []interface{}
+
+	//* base query
+	query := `
+	with datas as(
+		select 
+			p.uuid
+			,p.name
+			,p.abbr_name
+			,p.is_staff
+			,s."name" as status
+		from public."position" p
+		join public.status s on p.status_uuid = s.uuid
+	)
+	`
+
+	// param = append(param, tenantUUID)
+	queryBuilder := ""
+
+	//* build query by payload data
+	// search
+	queryBuilder += `(lower(name) LIKE lower($` + strconv.Itoa(len(param)+1) + `) ` +
+		` or lower(abbr_name) LIKE lower($` + strconv.Itoa(len(param)+1) + `) ` +
+		`)`
+	if payload.Search != nil && len(*payload.Search) > 0 {
+		param = append(param, "%"+*payload.Search+"%")
+	} else {
+		param = append(param, "%"+""+"%")
+	}
+
+	// filter
+	if payload.Filter != nil {
+		if (*payload.Filter)["status"] != nil {
+			queryBuilder += ` and lower(status) = lower($` + strconv.Itoa(len(param)+1) + `)`
+			param = append(param, (*payload.Filter)["status"].(string))
+		}
+		if (*payload.Filter)["is_staff"] != nil {
+			queryBuilder += ` and datas.is_staff = $` + strconv.Itoa(len(param)+1)
+			param = append(param, (*payload.Filter)["is_staff"].(bool))
+		}
+	}
+
+	// run count first to get data statistic
+	queryCount := query + "SELECT COUNT(*) FROM datas WHERE " + queryBuilder
+	count, err := db.GetSingleDataByQuery[model.CountResult](queryCount, param...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// order by
+	if payload.SortBy != nil {
+		queryBuilder += ` ORDER BY `
+		for i, sortBy := range *payload.SortBy {
+			for key, value := range sortBy {
+				if strings.ToLower(value.(string)) == "asc" || strings.ToLower(value.(string)) == "desc" {
+					queryBuilder += key + ` ` + value.(string)
+					if i+1 < len(*payload.SortBy) {
+						queryBuilder += `, `
+					}
+				}
+			}
+		}
+	}
+
+	// limit
+	if payload.RowPerPage != nil && *payload.RowPerPage != 0 {
+		queryBuilder += ` LIMIT $` + strconv.Itoa(len(param)+1)
+		param = append(param, *payload.RowPerPage)
+	} else {
+		queryBuilder += ` LIMIT $` + strconv.Itoa(len(param)+1)
+		param = append(param, DEFAULT_ROW_PER_PAGES)
+	}
+
+	// offset
+	if payload.Page != nil && *payload.Page != 0 {
+		queryBuilder += ` OFFSET $` + strconv.Itoa(len(param)+1)
+		if payload.RowPerPage != nil && *payload.RowPerPage != 0 {
+			param = append(param, *payload.Page**payload.RowPerPage-*payload.RowPerPage)
+		} else {
+			param = append(param, *payload.Page*DEFAULT_ROW_PER_PAGES-DEFAULT_ROW_PER_PAGES)
+		}
+	} else {
+		queryBuilder += ` OFFSET $` + strconv.Itoa(len(param)+1)
+		param = append(param, DEFAULT_PAGES*DEFAULT_ROW_PER_PAGES-DEFAULT_ROW_PER_PAGES)
+	}
+
+	if len(queryBuilder) > 0 {
+		query += `SELECT * FROM datas WHERE ` + queryBuilder
+	}
+
+	selectedData, err := db.GetMultipleDataByQuery[model.ReadResultPosition](query, param...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dataStat := CalculateDataStatisticResult(count, payload, len(*selectedData))
+
+	return *selectedData, &dataStat, nil
+}
