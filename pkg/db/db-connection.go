@@ -38,12 +38,6 @@ func ConnectDB() error {
 	config.MaxConnIdleTime = 5 * time.Minute
 	config.HealthCheckPeriod = 1 * time.Minute
 
-	config.MaxConns = 20
-	config.MinConns = 2
-	config.MaxConnLifetime = 30 * time.Minute
-	config.MaxConnIdleTime = 5 * time.Minute
-	config.HealthCheckPeriod = time.Minute
-
 	Conn, err = pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return err
