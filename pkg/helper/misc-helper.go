@@ -447,9 +447,9 @@ func SearchEmployeeStatus(tenantUUID string, payload model.SearchPayload) ([]mod
 			queryBuilder += ` and lower(abbr_name) like lower($` + strconv.Itoa(len(param)+1) + `)`
 			param = append(param, `%_staff_%`)
 		} else {
-			queryBuilder += ` and lower(abbr_name) like lower(%_staff_%)`
+			queryBuilder += ` and lower(abbr_name) not like lower('%_staff_%')`
 			queryBuilder += ` and lower(abbr_name) like lower($` + strconv.Itoa(len(param)+1) + `)`
-			param = append(param, `%_employee_%`)
+			param = append(param, `%`+`employee_`+`%`)
 		}
 	}
 
