@@ -412,3 +412,101 @@ func SearchPosition(tenantUUID string, payload model.SearchPayload) ([]model.Rea
 
 	return *selectedData, &dataStat, nil
 }
+
+func SearchEmployeeStatus(tenantUUID string, payload model.SearchPayload) ([]model.ReadResultEmployeeStatus, *model.DataStatistics, error) {
+	var param []interface{}
+
+	//* base query
+	query := `
+	with datas as(
+		select 
+			s.uuid
+			,s."name" 
+			,s.abbr_name 
+		from public.status s 
+	)
+	`
+
+	// param = append(param, tenantUUID)
+	queryBuilder := ""
+
+	//* build query by payload data
+	// search
+	queryBuilder += `(lower(name) LIKE lower($` + strconv.Itoa(len(param)+1) + `) ` +
+		` or lower(abbr_name) LIKE lower($` + strconv.Itoa(len(param)+1) + `) ` +
+		`)`
+	if payload.Search != nil && len(*payload.Search) > 0 {
+		param = append(param, "%"+*payload.Search+"%")
+	} else {
+		param = append(param, "%"+""+"%")
+	}
+
+	// filter
+	if payload.Filter != nil {
+		if (*payload.Filter)["is_staff"] != nil && (*payload.Filter)["is_staff"].(bool) {
+			queryBuilder += ` and lower(abbr_name) like lower($` + strconv.Itoa(len(param)+1) + `)`
+			param = append(param, `%_staff_%`)
+		} else {
+			queryBuilder += ` and lower(abbr_name) like lower(%_staff_%)`
+			queryBuilder += ` and lower(abbr_name) like lower($` + strconv.Itoa(len(param)+1) + `)`
+			param = append(param, `%_employee_%`)
+		}
+	}
+
+	// run count first to get data statistic
+	queryCount := query + "SELECT COUNT(*) FROM datas WHERE " + queryBuilder
+	count, err := db.GetSingleDataByQuery[model.CountResult](queryCount, param...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// order by
+	if payload.SortBy != nil {
+		queryBuilder += ` ORDER BY `
+		for i, sortBy := range *payload.SortBy {
+			for key, value := range sortBy {
+				if strings.ToLower(value.(string)) == "asc" || strings.ToLower(value.(string)) == "desc" {
+					queryBuilder += key + ` ` + value.(string)
+					if i+1 < len(*payload.SortBy) {
+						queryBuilder += `, `
+					}
+				}
+			}
+		}
+	}
+
+	// limit
+	if payload.RowPerPage != nil && *payload.RowPerPage != 0 {
+		queryBuilder += ` LIMIT $` + strconv.Itoa(len(param)+1)
+		param = append(param, *payload.RowPerPage)
+	} else {
+		queryBuilder += ` LIMIT $` + strconv.Itoa(len(param)+1)
+		param = append(param, DEFAULT_ROW_PER_PAGES)
+	}
+
+	// offset
+	if payload.Page != nil && *payload.Page != 0 {
+		queryBuilder += ` OFFSET $` + strconv.Itoa(len(param)+1)
+		if payload.RowPerPage != nil && *payload.RowPerPage != 0 {
+			param = append(param, *payload.Page**payload.RowPerPage-*payload.RowPerPage)
+		} else {
+			param = append(param, *payload.Page*DEFAULT_ROW_PER_PAGES-DEFAULT_ROW_PER_PAGES)
+		}
+	} else {
+		queryBuilder += ` OFFSET $` + strconv.Itoa(len(param)+1)
+		param = append(param, DEFAULT_PAGES*DEFAULT_ROW_PER_PAGES-DEFAULT_ROW_PER_PAGES)
+	}
+
+	if len(queryBuilder) > 0 {
+		query += `SELECT * FROM datas WHERE ` + queryBuilder
+	}
+
+	selectedData, err := db.GetMultipleDataByQuery[model.ReadResultEmployeeStatus](query, param...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dataStat := CalculateDataStatisticResult(count, payload, len(*selectedData))
+
+	return *selectedData, &dataStat, nil
+}
